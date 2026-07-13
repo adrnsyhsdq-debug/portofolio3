@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #c9a44c;
+}
+
+body {
+  @apply bg-ink text-neutral-100 font-sans antialiased;
+}
+
+h1, h2, h3 {
+  @apply font-display;
+}
