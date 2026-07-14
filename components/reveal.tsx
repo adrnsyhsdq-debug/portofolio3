@@ -1,52 +1,76 @@
 'use client'
 
-import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { motion, useReducedMotion, type Variants } from 'motion/react'
 import type { ReactNode } from 'react'
 
-type Tag = 'div' | 'span' | 'p' | 'h2'
+type Direction = 'up' | 'left' | 'right' | 'none'
 
-const tagToMotion = {
-  div: motion.div,
-  span: motion.span,
-  p: motion.p,
-  h2: motion.h2,
-} as const
-
-const variants: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0 },
+type RevealProps = {
+  children: ReactNode
+  className?: string
+  /** Delay in seconds before the reveal starts (used to stagger siblings). */
+  delay?: number
+  /** Direction the content travels in from. Defaults to 'up'. */
+  direction?: Direction
+  /** HTML element to render as. Defaults to 'div'. */
+  as?: 'div' | 'li' | 'span'
 }
 
+const OFFSET = 24
+
+function getOffset(direction: Direction) {
+  switch (direction) {
+    case 'left':
+      return { x: -OFFSET, y: 0 }
+    case 'right':
+      return { x: OFFSET, y: 0 }
+    case 'none':
+      return { x: 0, y: 0 }
+    default:
+      return { x: 0, y: OFFSET }
+  }
+}
+
+/**
+ * Scroll-triggered fade + slide reveal used throughout the site. Fully
+ * respects the OS-level "reduce motion" preference: when it's enabled,
+ * content still appears (never left invisible, a common accessibility bug
+ * with scroll-reveal libraries) — it just appears instantly with no
+ * movement instead of animating in.
+ */
 export function Reveal({
   children,
+  className,
   delay = 0,
+  direction = 'up',
   as = 'div',
-  className = '',
-}: {
-  children: ReactNode
-  delay?: number
-  as?: Tag
-  className?: string
-}) {
+}: RevealProps) {
   const shouldReduceMotion = useReducedMotion()
+  const offset = shouldReduceMotion ? { x: 0, y: 0 } : getOffset(direction)
 
-  if (shouldReduceMotion) {
-    const Static = as
-    return <Static className={className}>{children}</Static>
+  const variants: Variants = {
+    hidden: { opacity: 0, ...offset },
+    visible: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      transition: {
+        duration: shouldReduceMotion ? 0.01 : 0.6,
+        delay: shouldReduceMotion ? 0 : delay,
+        ease: [0.65, 0, 0.35, 1],
+      },
+    },
   }
 
-  const Component = tagToMotion[as]
+  const shared = {
+    className,
+    initial: 'hidden' as const,
+    whileInView: 'visible' as const,
+    viewport: { once: true, margin: '-80px' },
+    variants,
+  }
 
-  return (
-    <Component
-      className={className}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-80px' }}
-      variants={variants}
-      transition={{ duration: 0.6, delay, ease: [0.65, 0, 0.35, 1] }}
-    >
-      {children}
-    </Component>
-  )
+  if (as === 'li') return <motion.li {...shared}>{children}</motion.li>
+  if (as === 'span') return <motion.span {...shared}>{children}</motion.span>
+  return <motion.div {...shared}>{children}</motion.div>
 }
