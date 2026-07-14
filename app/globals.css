@@ -2,8 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   @apply bg-paper text-ink font-sans antialiased selection:bg-magenta selection:text-paper;
+  overflow-x: hidden;
 }
 
 h1, h2, h3 {
@@ -40,16 +51,5 @@ h1, h2, h3 {
   }
   .animate-blink {
     animation: blink 1s step-end infinite;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }
